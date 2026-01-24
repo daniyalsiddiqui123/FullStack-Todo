@@ -1,0 +1,31 @@
+[project]
+name = "cli-todo-app"
+version = "0.1.0"
+description = "A command-line interface todo application"
+readme = "README.md"
+requires-python = ">=3.13"
+license = {text = "MIT"}
+authors = [
+    {name = "Developer", email = "developer@example.com"}
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+    "click>=8.0.0",
+    "rich>=13.0.0"
+]
+
+[project.scripts]
+todo = "todo_app.__main__:main"
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["todo_app*"]
