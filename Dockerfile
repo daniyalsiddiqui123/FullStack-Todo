@@ -13,9 +13,9 @@ RUN npm install
 # Copy rest of the code
 COPY . .
 
-# Expose the port your MCP server uses
+# Set the MCP server port as an environment variable
 ENV MCP_SERVER_PORT=3001
 EXPOSE 3001
 
-# Start the server
-CMD ["npm", "run", "start:port"]
+# Start the server directly (no cross-env needed)
+CMD ["node", "dist/server.js"]
