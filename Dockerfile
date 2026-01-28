@@ -1,21 +1,20 @@
-# Use Node 20 (or any LTS)
 FROM node:20
 
-# Set working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json first (for caching)
+# Copy package files first for caching
 COPY package*.json ./
-
-# Install dependencies
 RUN npm install
 
-# Copy rest of the code
+# Install ts-node globally so we can run TS files directly
+RUN npm install -g ts-node typescript
+
+# Copy all code
 COPY . .
 
-# Set the MCP server port as an environment variable
+# Set MCP server port
 ENV MCP_SERVER_PORT=3001
 EXPOSE 3001
 
-# Start the server directly (no cross-env needed)
-CMD ["node", "dist/server.js"]
+# Run your TypeScript server
+CMD ["ts-node", "server.ts"]
