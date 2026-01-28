@@ -2,26 +2,113 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
+    /* Futuristic Professional Theme - Light Mode */
+    --background: 0 0% 100%; /* Pure white */
+    --foreground: 222.2 47.4% 11.2%; /* Dark blue-gray */
+
+    --card: 0 0% 100%; /* Pure white */
+    --card-foreground: 222.2 47.4% 11.2%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 47.4% 11.2%;
+
+    /* Professional teal/cyan primary */
+    --primary: 171 100% 40%; /* Deep teal */
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 171 30% 91%; /* Light teal */
+    --secondary-foreground: 171 100% 20%;
+
+    --muted: 210 40% 96%; /* Light blue-gray */
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    /* Neon cyan accent */
+    --accent: 180 100% 50%; /* Bright cyan */
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 84.2% 60.2%; /* Red */
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 214.3 31.8% 91.4%; /* Light gray-blue */
+    --input: 214.3 31.8% 91.4%;
+    --ring: 171 100% 41.8%; /* Teal ring */
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* Futuristic Professional Theme - Dark Mode */
+    --background: 222.2 84% 4.9%; /* Very dark gray-blue */
+    --foreground: 210 40% 98%; /* Nearly white */
+
+    --card: 222.2 70% 6.1%; /* Dark gray-blue */
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    /* Bright teal primary */
+    --primary: 171 100% 60%; /* Vibrant teal */
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 217.2 32.6% 17.5%; /* Dark blue-gray */
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    /* Bright cyan accent */
+    --accent: 180 93.5% 66.7%; /* Vibrant cyan */
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 72.2% 50.6%; /* Dark red */
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 217.2 32.6% 17.5%; /* Dark blue-gray */
+    --input: 217.2 32.6% 17.5%;
+    --ring: 171 100% 48%; /* Teal ring */
   }
 }
 
-body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      transparent
-    )
-    rgb(var(--background-start-rgb));
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* Additional futuristic styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-muted;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-accent rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-accent/80;
+}
+
+/* Glass morphism effect for certain elements */
+.glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dark .glass {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }

@@ -116,19 +116,19 @@ export default function TodoItem({ todo, onUpdate, onDelete }: TodoItemProps) {
 
   if (isEditing) {
     return (
-      <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
+      <div className="bg-card p-4 rounded-lg border border-border shadow-sm hover:shadow-md transition-shadow duration-200">
         <form onSubmit={handleUpdate} className="space-y-4">
           {error && (
-            <div className="rounded-md bg-red-50 p-3">
+            <div className="rounded-md bg-destructive/10 p-3">
               <div className="flex">
                 <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                  <svg className="h-5 w-5 text-destructive" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                   </svg>
                 </div>
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">Error</h3>
-                  <div className="mt-2 text-sm text-red-700">
+                  <h3 className="text-sm font-medium text-destructive">Error</h3>
+                  <div className="mt-2 text-sm text-destructive/80">
                     <p>{error}</p>
                   </div>
                 </div>
@@ -140,7 +140,7 @@ export default function TodoItem({ todo, onUpdate, onDelete }: TodoItemProps) {
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-base text-gray-900 bg-white"
+              className="w-full px-3 py-2 border border-input rounded-md shadow-sm focus:outline-none focus:ring-ring focus:border-ring text-base text-foreground bg-background"
               placeholder="Task title..."
               required
             />
@@ -149,7 +149,7 @@ export default function TodoItem({ todo, onUpdate, onDelete }: TodoItemProps) {
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 bg-white"
+              className="w-full px-3 py-2 border border-input rounded-md shadow-sm focus:outline-none focus:ring-ring focus:border-ring text-foreground bg-background"
               rows={2}
               placeholder="Add description..."
             />
@@ -161,16 +161,16 @@ export default function TodoItem({ todo, onUpdate, onDelete }: TodoItemProps) {
                 id={`completed-${todo.id}`}
                 checked={completed}
                 onChange={() => setCompleted(!completed)}
-                className="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                className="h-5 w-5 text-primary focus:ring-ring border-input rounded"
               />
-              <label htmlFor={`completed-${todo.id}`} className="ml-2 block text-sm text-gray-900">
+              <label htmlFor={`completed-${todo.id}`} className="ml-2 block text-sm text-foreground">
                 {completed ? 'Mark as pending' : 'Mark as completed'}
               </label>
             </div>
             <div className="flex space-x-2">
               <button
                 type="submit"
-                className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md shadow-sm text-primary-foreground bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring"
               >
                 Save
               </button>
@@ -182,7 +182,7 @@ export default function TodoItem({ todo, onUpdate, onDelete }: TodoItemProps) {
                   setDescription(todo.description || '');
                   setCompleted(todo.completed);
                 }}
-                className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                className="inline-flex items-center px-3 py-1.5 border border-input text-sm font-medium rounded-md shadow-sm text-foreground bg-card hover:bg-accent focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring"
               >
                 Cancel
               </button>
@@ -194,7 +194,7 @@ export default function TodoItem({ todo, onUpdate, onDelete }: TodoItemProps) {
   }
 
   return (
-    <div className={`bg-white p-4 rounded-lg border shadow-sm hover:shadow-md transition-shadow duration-200 ${completed ? 'border-green-200' : 'border-gray-200'}`}>
+    <div className={`bg-card p-4 rounded-lg border shadow-sm hover:shadow-md transition-shadow duration-200 ${completed ? 'border-green-500/30' : 'border-border'}`}>
       <div className="flex items-start">
         <div className="flex items-center h-5 mt-0.5">
           <input
@@ -202,35 +202,35 @@ export default function TodoItem({ todo, onUpdate, onDelete }: TodoItemProps) {
             type="checkbox"
             checked={completed}
             onChange={handleToggle}
-            className="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded bg-white"
+            className="h-5 w-5 text-primary focus:ring-ring border-input rounded bg-background"
           />
         </div>
         <div className="ml-3 flex-1 min-w-0">
           <div className="flex items-center justify-between">
-            <p className={`text-base font-medium ${completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
+            <p className={`text-base font-medium ${completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
               {todo.title}
             </p>
             <div className="flex space-x-2">
               <button
                 onClick={() => setIsEditing(true)}
-                className="text-sm font-medium text-indigo-600 hover:text-indigo-900 transition-colors"
+                className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
               >
                 Edit
               </button>
               <button
                 onClick={handleDelete}
-                className="text-sm font-medium text-red-600 hover:text-red-900 transition-colors"
+                className="text-sm font-medium text-destructive hover:text-destructive/80 transition-colors"
               >
                 Delete
               </button>
             </div>
           </div>
           {todo.description && (
-            <p className={`mt-1 text-sm ${completed ? 'text-gray-400' : 'text-gray-600'}`}>
+            <p className={`mt-1 text-sm ${completed ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
               {todo.description}
             </p>
           )}
-          <div className="mt-2 flex items-center text-xs text-gray-500">
+          <div className="mt-2 flex items-center text-xs text-muted-foreground">
             <span>Created: {formatDate(todo.createdAt)}</span>
             {new Date(todo.updatedAt).getTime() !== new Date(todo.createdAt).getTime() && (
               <>

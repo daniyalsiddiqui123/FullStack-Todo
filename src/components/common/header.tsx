@@ -4,8 +4,10 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { getAuthCookie } from '@/lib/auth/cookies.client';
+import { useTheme } from '@/contexts/theme-context';
 
 export default function Header() {
+  const { theme, toggleTheme } = useTheme();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userEmail, setUserEmail] = useState('');
   const [isLoading, setIsLoading] = useState(true); // Add loading state
@@ -13,42 +15,34 @@ export default function Header() {
 
   // Effect to check authentication status once on mount
   useEffect(() => {
-    const checkAuthStatus = () => {
+    const checkAuthStatus = async () => {
       try {
-        // Direct cookie check
-        const cookieValue = document.cookie
-          .split('; ')
-          .find(row => row.startsWith('auth_token='))
-          ?.split('=')[1];
+        // Check authentication status by making an API call
+        const response = await fetch('/api/auth/status', {
+          method: 'GET',
+          credentials: 'include' // Important: include cookies in the request
+        });
 
-        // Also try getAuthCookie function
-        const funcToken = getAuthCookie();
+        if (response.ok) {
+          const data = await response.json();
 
-        // Use either method, prioritize the one that has a value
-        const token = cookieValue || funcToken;
-
-        const isCurrentlyLoggedIn = !!token && token.length > 0;
-
-        setIsLoggedIn(isCurrentlyLoggedIn);
-
-        if (isCurrentlyLoggedIn && token) {
-          // Extract user info from token
-          try {
-            const tokenParts = token.split('.');
-            if (tokenParts.length === 3) {
-              const payload = JSON.parse(atob(tokenParts[1]));
-              if (payload.email) {
-                setUserEmail(payload.email);
-              }
+          if (data.authenticated) {
+            setIsLoggedIn(true);
+            if (data.user && data.user.email) {
+              setUserEmail(data.user.email);
+            } else {
+              setUserEmail('User');
             }
-          } catch (decodeError) {
-            console.error('Error decoding token:', decodeError);
+          } else {
+            setIsLoggedIn(false);
+            setUserEmail('');
           }
         } else {
+          setIsLoggedIn(false);
           setUserEmail('');
         }
       } catch (error) {
-        console.error('Error in auth check:', error);
+        console.error('Error checking auth status:', error);
         setIsLoggedIn(false);
         setUserEmail('');
       }
@@ -57,11 +51,19 @@ export default function Header() {
       setIsLoading(false);
     };
 
-    // Initial check after a small delay to ensure cookies are available
+    // Initial check after a small delay to ensure page is ready
     const initialCheck = setTimeout(checkAuthStatus, 100);
+
+    // Also listen for auth changes (in case login/logout happens elsewhere)
+    const handleAuthEvent = () => {
+      checkAuthStatus();
+    };
+
+    window.addEventListener('auth-change', handleAuthEvent);
 
     return () => {
       clearTimeout(initialCheck);
+      window.removeEventListener('auth-change', handleAuthEvent);
     };
   }, []); // Run once on mount and clean up on unmount
 
@@ -99,75 +101,107 @@ export default function Header() {
   if (isLoading) {
     // Show a minimal header or loading state
     return (
-      <header className="bg-white shadow-sm">
+      <header className="bg-card shadow-sm border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
             <div className="flex items-center">
-              <span className="text-xl font-bold text-indigo-600">TodoPro</span>
+              <span className="text-xl font-bold text-primary">TodoPro</span>
             </div>
-            <div className="text-sm text-gray-500">Loading...</div>
+            <div className="text-sm text-muted-foreground">Loading...</div>
           </div>
         </div>
       </header>
     );
   }
 
-  // Special handling for dashboard page - since middleware protects it,
-  // we can assume user is authenticated if they're on this page
-  const isDashboardPage = pathname === '/dashboard';
-
-  // For dashboard page, always show profile/logout if loading is done
-  const showProfileOnDashboard = isDashboardPage && !isLoading;
-
   return (
-    <header className="bg-white shadow-sm">
+    <header className="bg-card/80 backdrop-blur-md border-b border-border/50 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
-            <Link href="/dashboard" className="flex-shrink-0 flex items-center">
-              <span className="text-xl font-bold text-indigo-600">TodoPro</span>
+            <Link href="/dashboard" className="flex-shrink-0 flex items-center space-x-2">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                <svg className="w-5 h-5 text-primary-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              </div>
+              <span className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">TodoPro</span>
             </Link>
-            <nav className="ml-6 flex space-x-4">
+            <nav className="ml-8 flex items-center space-x-1">
               <Link
                 href="/dashboard"
-                className={`px-3 py-2 rounded-md text-sm font-medium ${
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                   pathname === '/dashboard'
-                    ? 'bg-indigo-100 text-indigo-700'
-                    : 'text-gray-700 hover:bg-gray-50'
+                    ? 'bg-primary/10 text-primary shadow-sm shadow-primary/20'
+                    : 'text-foreground/70 hover:text-foreground hover:bg-accent/20'
                 }`}
               >
                 Dashboard
               </Link>
+              <Link
+                href="/ai-chatbot"
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  pathname === '/ai-chatbot'
+                    ? 'bg-primary/10 text-primary shadow-sm shadow-primary/20'
+                    : 'text-foreground/70 hover:text-foreground hover:bg-accent/20'
+                }`}
+              >
+                AI Assistant
+              </Link>
             </nav>
           </div>
-          <div className="flex items-center">
-            {isLoggedIn || showProfileOnDashboard ? (
-              <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4">
+            {/* Theme Toggle Button */}
+            <button
+              onClick={() => toggleTheme()}
+              className="p-2 rounded-xl hover:bg-accent/20 transition-all duration-200 group"
+              aria-label="Toggle theme"
+            >
+              {theme === 'dark' ? (
+                <div className="relative w-5 h-5">
+                  <svg className="w-5 h-5 text-yellow-400 transition-transform duration-300 group-hover:scale-110" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              ) : (
+                <div className="relative w-5 h-5">
+                  <svg className="w-5 h-5 text-foreground transition-transform duration-300 group-hover:scale-110" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+                  </svg>
+                </div>
+              )}
+            </button>
+
+            {isLoggedIn ? (
+              <div className="flex items-center space-x-3">
                 {/* User Profile */}
-                <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                  <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
-                    <span className="text-indigo-600 font-medium">{getUserInitial()}</span>
+                <div className="flex items-center space-x-2 text-sm font-medium text-foreground">
+                  <div className="relative">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                      <span className="text-primary-foreground font-medium text-sm">{getUserInitial()}</span>
+                    </div>
+                    <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-card"></div>
                   </div>
-                  <span>{userEmail ? userEmail.split('@')[0] : 'User'}</span>
+                  <span className="hidden sm:inline text-foreground/80">{userEmail ? userEmail.split('@')[0] : 'User'}</span>
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="text-sm font-medium text-gray-700 hover:text-indigo-600"
+                  className="text-sm font-medium text-foreground/70 hover:text-primary transition-colors duration-200"
                 >
                   Logout
                 </button>
               </div>
             ) : (
-              <div className="flex space-x-4">
+              <div className="flex space-x-3">
                 <Link
                   href="/auth/login"
-                  className="text-sm font-medium text-gray-700 hover:text-indigo-600"
+                  className="text-sm font-medium text-foreground/70 hover:text-primary transition-colors duration-200"
                 >
                   Login
                 </Link>
                 <Link
                   href="/auth/register"
-                  className="text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-md"
+                  className="text-sm font-medium text-primary-foreground bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 px-4 py-2 rounded-lg transition-all duration-200 shadow-sm shadow-primary/20"
                 >
                   Sign up
                 </Link>

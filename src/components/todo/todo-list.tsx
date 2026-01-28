@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import TodoForm from './todo-form';
 import TodoItem from './todo-item';
 
@@ -25,23 +25,34 @@ export default function TodoList() {
     if (typeof window !== 'undefined') {
       // Dispatch custom event to update dashboard stats
       window.dispatchEvent(new CustomEvent('todosUpdated', {
-        detail: { total: todos.length, completed: todos.filter(todo => todo.completed).length, active: todos.length - todos.filter(todo => todo.completed).length }
+        detail: {
+          total: todos.length,
+          completed: todos.filter(todo => todo.completed).length,
+          active: todos.length - todos.filter(todo => todo.completed).length,
+          fromTodoList: true // Indicate this event is from TodoList to prevent infinite loop
+        }
       }));
     }
   }, [todos]);
 
-  useEffect(() => {
-    fetchTodos();
-  }, []);
-
-  const fetchTodos = async () => {
+  const fetchTodos = useCallback(async () => {
     try {
+      setLoading(true);
       const response = await fetch('/api/todos', {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         }
       });
+
+      // Check if the response is ok before parsing JSON
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API error:', response.status, errorText);
+        setError(`Failed to fetch todos: ${response.status} ${response.statusText}`);
+        return;
+      }
+
       const data = await response.json();
 
       if (data.success) {
@@ -55,11 +66,37 @@ export default function TodoList() {
       }
     } catch (err) {
       setError('An error occurred while fetching todos');
-      console.error(err);
+      console.error('Fetch error:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchTodos();
+  }, []);
+
+  useEffect(() => {
+    const handleTodosUpdated = (event: Event) => {
+      // Type guard to ensure it's a CustomEvent with detail
+      if ('detail' in event) {
+        // Prevent the event dispatched by this component from triggering a refresh
+        // Only refresh if it's an event from outside this component (like chatbot)
+        if (!(event as CustomEvent).detail?.fromTodoList) {
+          fetchTodos(); // Refresh todos when the event is fired from chatbot
+        }
+      } else {
+        // If it doesn't have detail, treat it as an external event and refresh
+        fetchTodos();
+      }
+    };
+
+    window.addEventListener('todosUpdated', handleTodosUpdated);
+
+    return () => {
+      window.removeEventListener('todosUpdated', handleTodosUpdated);
+    };
+  }, [fetchTodos]);
 
   const handleTodoAdded = (newTodo: Todo) => {
     setTodos([newTodo, ...todos]);
@@ -78,23 +115,23 @@ export default function TodoList() {
   if (loading) {
     return (
       <div className="flex justify-center items-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="rounded-md bg-red-50 p-4 mb-6">
+      <div className="rounded-md bg-destructive/10 p-4 mb-6">
         <div className="flex">
           <div className="flex-shrink-0">
-            <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+            <svg className="h-5 w-5 text-destructive" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
             </svg>
           </div>
           <div className="ml-3">
-            <h3 className="text-sm font-medium text-red-800">Error</h3>
-            <div className="mt-2 text-sm text-red-700">
+            <h3 className="text-sm font-medium text-destructive">Error</h3>
+            <div className="mt-2 text-sm text-destructive/80">
               <p>{error}</p>
             </div>
           </div>
@@ -116,23 +153,23 @@ export default function TodoList() {
   const activeTodos = totalTodos - completedTodos;
 
   return (
-    <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+    <div className="bg-card shadow-sm rounded-lg overflow-hidden">
+      <div className="px-6 py-4 border-b border-border bg-muted">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h3 className="text-lg leading-6 font-medium text-gray-900">My Tasks</h3>
-            <p className="mt-1 text-sm text-gray-500">
+            <h3 className="text-lg leading-6 font-medium text-foreground">My Tasks</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
               Manage your tasks efficiently
             </p>
           </div>
           <div className="mt-2 sm:mt-0 flex space-x-2">
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary-foreground">
               All: {totalTodos}
             </span>
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">
               Active: {activeTodos}
             </span>
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-500">
               Completed: {completedTodos}
             </span>
           </div>
@@ -147,8 +184,8 @@ export default function TodoList() {
             onClick={() => setFilter('all')}
             className={`px-3 py-1 text-sm rounded-md ${
               filter === 'all'
-                ? 'bg-indigo-100 text-indigo-700 font-medium'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'bg-primary text-primary-foreground font-medium'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             All
@@ -157,8 +194,8 @@ export default function TodoList() {
             onClick={() => setFilter('active')}
             className={`px-3 py-1 text-sm rounded-md ${
               filter === 'active'
-                ? 'bg-indigo-100 text-indigo-700 font-medium'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'bg-primary text-primary-foreground font-medium'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             Active
@@ -167,8 +204,8 @@ export default function TodoList() {
             onClick={() => setFilter('completed')}
             className={`px-3 py-1 text-sm rounded-md ${
               filter === 'completed'
-                ? 'bg-indigo-100 text-indigo-700 font-medium'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'bg-primary text-primary-foreground font-medium'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             Completed
@@ -179,11 +216,11 @@ export default function TodoList() {
         <div className="mt-6">
           {filteredTodos.length === 0 ? (
             <div className="text-center py-12">
-              <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="mx-auto h-12 w-12 text-muted-foreground/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No tasks</h3>
-              <p className="mt-1 text-sm text-gray-500">
+              <h3 className="mt-2 text-sm font-medium text-foreground">No tasks</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
                 {filter === 'completed'
                   ? "You haven't completed any tasks yet."
                   : "Get started by creating a new task."}
