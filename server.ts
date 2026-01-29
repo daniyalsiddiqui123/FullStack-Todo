@@ -302,8 +302,23 @@ class MCPServer {
   constructor(port: number = 3001) {
     this.service = new TodoMCPService();
 
-    const server = createServer();
-    this.wss = new WebSocketServer({ server });
+    const httpServer = createServer((req, res) => {
+      // Handle HTTP health check requests for Hugging Face Spaces
+      if (req.url === '/' || req.url === '/health') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          status: 'ok',
+          message: 'MCP Server is running',
+          timestamp: new Date().toISOString()
+        }));
+      } else {
+        // For other routes, return 404
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Not Found' }));
+      }
+    });
+
+    this.wss = new WebSocketServer({ server: httpServer });
 
     this.wss.on('connection', (ws: WebSocket) => {
       console.log('Client connected');
@@ -400,7 +415,7 @@ class MCPServer {
       });
     });
 
-    server.listen(port, () => {
+    httpServer.listen(port, () => {
       console.log(`MCP Server listening on port ${port}`);
     });
   }
