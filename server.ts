@@ -415,7 +415,7 @@ class MCPServer {
       });
     });
 
-    httpServer.listen(port, () => {
+    httpServer.listen(port, '0.0.0.0', () => {
       console.log(`MCP Server listening on port ${port}`);
     });
   }
