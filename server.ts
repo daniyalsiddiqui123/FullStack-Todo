@@ -412,19 +412,12 @@ class MCPServer {
 
 // Start the server if this file is run directly
 if (require.main === module) {
-  const readline = createInterface({
-    input: process.stdin,
-    output: process.stdout
-  });
-
-  // Use port from environment variable or default to 8080 to avoid conflicts
-  const port = parseInt(process.env.MCP_SERVER_PORT || '8080');
+  // Use port from environment variable or default to 3001
+  const port = parseInt(process.env.PORT || process.env.MCP_SERVER_PORT || '3001');
   const server = new MCPServer(port);
 
-  readline.question('Press Enter to stop the server...', () => {
-    server.close();
-    readline.close();
-  });
+  // Export for use in modules if needed
+  module.exports = { MCPServer, server };
 }
 
 export { MCPServer, TodoMCPService };
