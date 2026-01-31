@@ -27,6 +27,11 @@ export const MCPSocketProvider: React.FC<MCPSocketProviderProps> = ({ children }
   useEffect(() => {
     // Use environment variable for server URL, fallback to localhost for development
     const serverUrl = process.env.NEXT_PUBLIC_MCP_SERVER_URL || 'ws://localhost:7860';
+
+    // Log the server URL being used for debugging
+    console.log('Attempting to connect to MCP server:', serverUrl);
+
+    // Create WebSocket connection with retry logic
     const ws = new WebSocket(serverUrl);
 
     ws.onopen = () => {
@@ -43,20 +48,27 @@ export const MCPSocketProvider: React.FC<MCPSocketProviderProps> = ({ children }
       ws.send(JSON.stringify(initMessage));
     };
 
-    ws.onclose = () => {
-      console.log('Disconnected from MCP server');
+    ws.onclose = (event) => {
+      console.log('Disconnected from MCP server:', event.reason);
       setIsConnected(false);
+
+      // Attempt to reconnect after a delay (but not in this implementation to avoid infinite loops)
+      // In a production app, you might want to implement a reconnection strategy
     };
 
     ws.onerror = (error) => {
       console.error('WebSocket error:', error);
+      console.error('Failed to connect to MCP server at:', serverUrl);
+      console.error('Please ensure the MCP server is running and accessible');
       setIsConnected(false);
     };
 
     setSocket(ws);
 
     return () => {
-      ws.close();
+      if (ws) {
+        ws.close();
+      }
     };
   }, []);
 

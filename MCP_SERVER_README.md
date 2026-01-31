@@ -42,6 +42,11 @@ You can customize the server configuration using environment variables. Copy `.e
 For Hugging Face Spaces deployment, set NEXT_PUBLIC_MCP_SERVER_URL to your deployed server WebSocket endpoint.
 Example: wss://daniyalsiddiqui1-todo.hf.space
 
+Note: If the chatbot shows as offline, verify that:
+1. The MCP server is properly deployed and running on Hugging Face Spaces
+2. The WebSocket connection is supported by your Hugging Face Space configuration
+3. The URL format matches what your deployed server expects for WebSocket connections
+
 ### 2. Run the Main Application
 
 In the main project directory:

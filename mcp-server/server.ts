@@ -318,16 +318,25 @@ class MCPServer {
       }
     });
 
-    // Configure WebSocket server to allow connections from Hugging Face Spaces and other origins
+    // Configure WebSocket server to handle Hugging Face Spaces proxy
     this.wss = new WebSocketServer({
       server: httpServer,
-      // Allow connections from any origin for Hugging Face Spaces deployment
+      // Allow all origins and handle potential proxy headers
       verifyClient: (info: { origin: string; secure: boolean; req: any }) => {
-        // Log the origin for debugging
+        // Log the origin and headers for debugging
         console.log('WebSocket connection attempt from:', info.origin);
-        // Allow all connections for Hugging Face Spaces compatibility
+        console.log('Request headers:', info.req.headers);
+        console.log('Secure connection:', info.secure);
+
+        // For Hugging Face Spaces, we allow connections and log details for debugging
+        // The proxy may modify headers, so we log them to understand the connection flow
         return true;
       }
+    });
+
+    // Log when WebSocket server is ready
+    this.wss.on('listening', () => {
+      console.log(`WebSocket server listening and ready to accept connections on port ${port}`);
     });
 
     this.wss.on('connection', (ws: WebSocket) => {
