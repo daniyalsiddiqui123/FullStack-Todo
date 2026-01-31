@@ -1,32 +1,21 @@
-FROM node:20
+FROM node:18-alpine
+
 WORKDIR /app
 
-# Install Python and pip
-RUN apt-get update && apt-get install -y python3 python3-pip python3-venv
-
-# Create and activate a Python virtual environment
-RUN python3 -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-
-# Copy and install Python dependencies in the virtual environment
-COPY requirements.txt .
-RUN pip3 install --no-cache-dir -r requirements.txt
-
-# Install Node.js dependencies
+# Copy package files
 COPY package*.json ./
-RUN npm install
-RUN npm install -g ts-node typescript
 
-# Copy application files
+# Install dependencies
+RUN npm ci --only=production
+
+# Copy source code
 COPY . .
 
-# Set environment variables
-# Use PORT from Hugging Face, default to 7860 if not set
-ENV PORT=${PORT:-7860}
-ENV MCP_SERVER_PORT=${PORT:-7860}
+# Build TypeScript
+RUN npm run build
 
-# Expose the port
-EXPOSE $PORT
+# Expose the port (using the same port as specified in the server)
+EXPOSE 7860
 
-# Start the server
-CMD ["sh", "-c", "ts-node server.ts"]
+# Start the application
+CMD ["npm", "run", "start:port"]
