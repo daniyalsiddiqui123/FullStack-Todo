@@ -299,7 +299,7 @@ class MCPServer {
   private wss: WebSocketServer;
   private service: TodoMCPService;
 
-  constructor(port: number = 3001) {
+  constructor(port: number = 7860) {
     this.service = new TodoMCPService();
 
     const httpServer = createServer((req, res) => {
@@ -428,7 +428,7 @@ class MCPServer {
 // Start the server if this file is run directly
 if (require.main === module) {
   // Use port from environment variable or default to 3001
-  const port = parseInt(process.env.PORT || process.env.MCP_SERVER_PORT || '3001');
+  const port = parseInt(process.env.PORT || process.env.MCP_SERVER_PORT || '7860');
   const server = new MCPServer(port);
 
   // Export for use in modules if needed

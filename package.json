@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
-    "start:port": "cross-env MCP_SERVER_PORT=3001 node dist/server.js",
+    "start:port": "cross-env MCP_SERVER_PORT=7860 node dist/server.js",
     "dev": "ts-node server.ts"
   },
   "dependencies": {
