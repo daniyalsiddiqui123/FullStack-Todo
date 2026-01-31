@@ -30,11 +30,17 @@ npm run build
 npm run start
 ```
 
+The server will start on port 7860 by default, which is configured for Hugging Face Spaces deployment.
+
 #### Environment Variables
 
 You can customize the server configuration using environment variables. Copy `.env.example` to `.env` and modify as needed:
 
-- `MCP_SERVER_PORT`: Port for the MCP server to listen on (default: 3001)
+- `MCP_SERVER_PORT`: Port for the MCP server to listen on (default: 7860)
+- `NEXT_PUBLIC_MCP_SERVER_URL`: WebSocket URL for the MCP server (default: ws://localhost:7860)
+
+For Hugging Face Spaces deployment, set NEXT_PUBLIC_MCP_SERVER_URL to your deployed server WebSocket endpoint.
+Example: wss://daniyalsiddiqui1-todo.hf.space
 
 ### 2. Run the Main Application
 
@@ -61,7 +67,7 @@ The chatbot supports the following commands:
 ## Technical Details
 
 ### MCP Server
-- Runs on port 3001 by default (to match the frontend configuration)
+- Runs on port 7860 by default (configured for Hugging Face Spaces)
 - Uses WebSocket protocol for real-time communication
 - Implements the MCP (Model Context Protocol) specification
 - Connects to the existing Prisma database

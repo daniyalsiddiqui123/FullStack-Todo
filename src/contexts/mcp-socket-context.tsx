@@ -25,7 +25,9 @@ export const MCPSocketProvider: React.FC<MCPSocketProviderProps> = ({ children }
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    const ws = new WebSocket('ws://localhost:3001');
+    // Use environment variable for server URL, fallback to localhost for development
+    const serverUrl = process.env.NEXT_PUBLIC_MCP_SERVER_URL || 'ws://localhost:7860';
+    const ws = new WebSocket(serverUrl);
 
     ws.onopen = () => {
       console.log('Connected to MCP server');
