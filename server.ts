@@ -322,7 +322,7 @@ class MCPServer {
     this.wss = new WebSocketServer({
       server: httpServer,
       // Allow connections from any origin for Hugging Face Spaces deployment
-      verifyClient: (info) => {
+      verifyClient: (info: { origin: string; secure: boolean; req: any }) => {
         // Log the origin for debugging
         console.log('WebSocket connection attempt from:', info.origin);
         // Allow all connections for Hugging Face Spaces compatibility
