@@ -52,7 +52,7 @@ class TodoAICommandService {
         baseURL: 'https://openrouter.ai/api/v1',
         apiKey: apiKey!,
         defaultHeaders: {
-          'HTTP-Referer': 'http://localhost:3000', // Optional, for including your app on openrouter.ai rankings.
+          'HTTP-Referer': 'https://daniyalsiddiqui1-todo.hf.space', // Optional, for including your app on openrouter.ai rankings.
           'X-Title': 'Todo Chatbot', // Optional. Shows in rankings on openrouter.ai.
         },
       });
@@ -318,7 +318,17 @@ class MCPServer {
       }
     });
 
-    this.wss = new WebSocketServer({ server: httpServer });
+    // Configure WebSocket server to allow connections from Hugging Face Spaces and other origins
+    this.wss = new WebSocketServer({
+      server: httpServer,
+      // Allow connections from any origin for Hugging Face Spaces deployment
+      verifyClient: (info) => {
+        // Log the origin for debugging
+        console.log('WebSocket connection attempt from:', info.origin);
+        // Allow all connections for Hugging Face Spaces compatibility
+        return true;
+      }
+    });
 
     this.wss.on('connection', (ws: WebSocket) => {
       console.log('Client connected');
