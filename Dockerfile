@@ -21,9 +21,9 @@ RUN npm install -g ts-node typescript
 COPY . .
 
 # Set environment variables
-# Use PORT from Hugging Face, default to 3001 if not set
-ENV PORT=${PORT:-3001}
-ENV MCP_SERVER_PORT=${PORT:-3001}
+# Use PORT from Hugging Face, default to 7860 if not set
+ENV PORT=${PORT:-7860}
+ENV MCP_SERVER_PORT=${PORT:-7860}
 
 # Expose the port
 EXPOSE $PORT
