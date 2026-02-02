@@ -28,5 +28,5 @@ ENV MCP_SERVER_PORT=${PORT:-7860}
 # Expose the port
 EXPOSE $PORT
 
-# Start the server
-CMD ["sh", "-c", "ts-node server.ts"]
+# Start the HTTP server
+CMD ["sh", "-c", "ts-node http-server.ts"]

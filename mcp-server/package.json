@@ -2,23 +2,29 @@
   "name": "todo-mcp-server",
   "version": "1.0.0",
   "description": "MCP server for AI-powered todo chatbot",
-  "main": "dist/server.js",
+  "main": "dist/http-server.js",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/server.js",
-    "start:port": "cross-env MCP_SERVER_PORT=7860 node dist/server.js",
-    "dev": "ts-node server.ts"
+    "start": "node dist/http-server.js",
+    "start:port": "cross-env MCP_SERVER_PORT=7860 node dist/http-server.js",
+    "start:websocket": "node dist/server.js",
+    "dev": "ts-node http-server.ts",
+    "dev:websocket": "ts-node server.ts"
   },
   "dependencies": {
     "@prisma/client": "^7.3.0",
+    "cors": "^2.8.6",
     "cross-env": "^7.0.3",
     "dotenv": "^17.2.3",
+    "express": "^5.2.1",
     "openai": "^6.16.0",
     "pg": "^8.17.2",
     "typescript": "^5.0.0",
     "ws": "^8.18.0"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
     "@types/node": "^20.0.0",
     "@types/ws": "^8.18.0",
     "ts-node": "^10.9.0"

@@ -1,0 +1,294 @@
+// Extract the service classes to a separate file to avoid import issues
+import OpenAI from 'openai';
+import { execSync } from 'child_process';
+
+// Import OpenAI client for advanced natural language processing
+import * as dotenv from 'dotenv';
+dotenv.config();
+
+interface Message {
+  jsonrpc: string;
+  id?: string | number;
+  method: string;
+  params?: any;
+}
+
+interface Response {
+  jsonrpc: string;
+  id?: string | number;
+  result?: any;
+  error?: {
+    code: number;
+    message: string;
+    data?: any;
+  };
+}
+
+// Service to handle advanced natural language command parsing using OpenAI/OpenRouter
+class TodoAICommandService {
+  constructor() {
+    // Constructor doesn't need to initialize OpenAI client immediately
+  }
+
+  // Process natural language command using AI
+  async processNaturalLanguageCommand(userId: string, command: string): Promise<any> {
+    // Check if we have an API key to use AI
+    const apiKey = process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY;
+    const hasApiKey = !!apiKey;
+
+    if (!hasApiKey) {
+      console.warn('Warning: OPENROUTER_API_KEY or OPENAI_API_KEY not set. Using fallback parsing.');
+      // If no API key, use fallback parsing
+      return this.fallbackParseCommand(command);
+    }
+
+    try {
+      // Initialize OpenAI client only when needed and with current environment variables
+      const openai = new OpenAI({
+        baseURL: 'https://openrouter.ai/api/v1',
+        apiKey: apiKey!,
+        defaultHeaders: {
+          'HTTP-Referer': 'https://daniyalsiddiqui1-todo.hf.space', // Optional, for including your app on openrouter.ai rankings.
+          'X-Title': 'Todo Chatbot', // Optional. Shows in rankings on openrouter.ai.
+        },
+      });
+
+      // Create a structured prompt for the AI to understand the intent
+      const prompt = `
+You are an AI assistant that helps manage todo items and engages in friendly conversation.
+Based on the user's natural language command, determine the appropriate action.
+
+User command: "${command}"
+
+Available actions:
+- add_todo: Add a new todo item
+- list_todos: List todo items (with filters: all, active, completed)
+- update_todo: Update a todo item (mark as complete, change title, etc.)
+- delete_todo: Delete a todo item
+- help: Show available commands
+- greet: Respond to greetings and casual conversation
+- answer_question: Answer questions about the todo app
+
+For special cases:
+- "complete all tasks", "mark all as complete", etc. should use update_todo with identifier "all" and updates { "completed": true }
+- "delete all tasks", "remove all", etc. should use delete_todo with identifier "all"
+- "list all completed", "show completed", etc. should use list_todos with filter "completed"
+- Greetings like "hello", "hi", "hey", "good morning", etc. should use greet action
+- Questions about todos, features, etc. should use answer_question action
+
+For task identification, extract just the task name from phrases like:
+- "complete the task to buy eggs" -> identifier should be "buy eggs"
+- "delete the task buy milk" -> identifier should be "buy milk"
+- "complete task buy groceries" -> identifier should be "buy groceries"
+
+Return a JSON object with the following structure:
+{
+  "action": "add_todo|list_todos|update_todo|delete_todo|help|greet|answer_question",
+  "data": {
+    // relevant data based on the action
+  },
+  "success": true,
+  "message": "Human-readable message about what will be done or conversational response"
+}
+
+Examples:
+- "Add buy groceries" -> { "action": "add_todo", "data": { "title": "buy groceries", "description": "" }, "message": "Adding todo: buy groceries" }
+- "Complete todo 1" -> { "action": "update_todo", "data": { "identifier": "1", "updates": { "completed": true } }, "message": "Marking todo 1 as completed" }
+- "Complete the task to buy eggs" -> { "action": "update_todo", "data": { "identifier": "buy eggs", "updates": { "completed": true } }, "message": "Marking todo 'buy eggs' as completed" }
+- "Complete all tasks" -> { "action": "update_todo", "data": { "identifier": "all", "updates": { "completed": true } }, "message": "Marking all todos as completed" }
+- "List all todos" -> { "action": "list_todos", "data": { "filter": "all" }, "message": "Listing all todos" }
+- "Hi" -> { "action": "greet", "data": {}, "message": "Hello! How can I help you with your todos today?" }
+- "What can you do?" -> { "action": "answer_question", "data": {}, "message": "I can help you manage your todos! You can ask me to add, complete, delete, or list your tasks. Try saying 'add buy groceries' or 'list all todos'." }
+
+Keep the response friendly and conversational when appropriate, and focused on the essential information needed to execute todo commands.
+`;
+
+      const completion = await openai.chat.completions.create({
+        model: process.env.OPENROUTER_MODEL || 'openai/gpt-4o-mini',
+        messages: [
+          { role: 'system', content: 'You are a helpful todo management assistant. Respond with valid JSON only.' },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.1, // Low temperature for more consistent outputs
+        response_format: { type: 'json_object' }, // Ensure JSON response
+      });
+
+      // Parse the AI response
+      const response = completion.choices[0]?.message?.content;
+      if (!response) {
+        throw new Error('No response from AI model');
+      }
+
+      const parsedResponse = JSON.parse(response);
+
+      // Ensure the response has the required structure
+      return {
+        action: parsedResponse.action,
+        data: parsedResponse.data,
+        success: parsedResponse.success ?? true,
+        message: parsedResponse.message
+      };
+    } catch (error) {
+      console.error('Error processing command with AI:', error);
+      // Fallback to simple parsing if AI fails
+      return this.fallbackParseCommand(command);
+    }
+  }
+
+  // Fallback command parser in case AI fails
+  private fallbackParseCommand(command: string): any {
+    const normalizedCommand = command.toLowerCase().trim();
+
+    // Handle greetings and casual conversation
+    if (normalizedCommand.includes('hello') ||
+        normalizedCommand.includes('hi') ||
+        normalizedCommand.includes('hey') ||
+        normalizedCommand.includes('good morning') ||
+        normalizedCommand.includes('good afternoon') ||
+        normalizedCommand.includes('good evening') ||
+        normalizedCommand.includes('greetings')) {
+      return {
+        action: 'greet',
+        data: {},
+        success: true,
+        message: `Hello! 😊 I'm your AI assistant for managing todos. You can ask me to add, complete, delete, or list your tasks. How can I help you today?`
+      };
+    }
+
+    // Handle common questions
+    if (normalizedCommand.includes('how are you') ||
+        normalizedCommand.includes('what can you do') ||
+        normalizedCommand.includes('help me') ||
+        normalizedCommand.includes('what do you do') ||
+        normalizedCommand.includes('what are you')) {
+      return {
+        action: 'answer_question',
+        data: {},
+        success: true,
+        message: `I'm here to help you manage your todos! You can ask me to add, complete, delete, or list your tasks. For example: "add buy groceries", "complete todo 1", "list all todos", or "delete buy groceries". What would you like to do?`
+      };
+    }
+
+    if (normalizedCommand.includes('add') || normalizedCommand.includes('create') || normalizedCommand.includes('new')) {
+      const match = command.match(/(?:add|create|new|make)\s+(.+)$/i);
+      if (match) {
+        return {
+          action: 'add_todo',
+          data: {
+            title: match[1].trim(),
+            description: '',
+          },
+          success: true,
+          message: `Adding todo: ${match[1].trim()}`
+        };
+      }
+    } else if (normalizedCommand.includes('complete') || normalizedCommand.includes('finish') || normalizedCommand.includes('done')) {
+      // Handle various patterns like "complete todo 1", "complete the task to buy eggs", "finish buy groceries", etc.
+      let idMatch = command.match(/(?:complete|finish|done)\s+(?:todo\s+)?(\d+|"[^"]+"|[^.!?]+)/i);
+
+      // Also try to match "complete the task to buy eggs" pattern
+      if (!idMatch) {
+        idMatch = command.match(/(?:complete|finish|done)\s+the\s+task\s+to\s+([^.!?]+)/i);
+      }
+
+      // Also try to match "complete the task buy eggs" pattern
+      if (!idMatch) {
+        idMatch = command.match(/(?:complete|finish|done)\s+the\s+task\s+([^.!?]+)/i);
+      }
+
+      // Also try to match "complete task buy eggs" pattern
+      if (!idMatch) {
+        idMatch = command.match(/(?:complete|finish|done)\s+task\s+([^.!?]+)/i);
+      }
+
+      if (idMatch) {
+        return {
+          action: 'update_todo',
+          data: {
+            identifier: idMatch[1].trim(),
+            updates: { completed: true }
+          },
+          success: true,
+          message: `Completing todo: ${idMatch[1].trim()}`
+        };
+      }
+    } else if (normalizedCommand.includes('delete') || normalizedCommand.includes('remove')) {
+      // Handle various patterns like "delete todo 1", "delete the task buy milk", "remove buy groceries", etc.
+      let idMatch = command.match(/(?:delete|remove)\s+(?:todo\s+)?(\d+|"[^"]+"|[^.!?]+)/i);
+
+      // Also try to match "delete the task buy milk" pattern
+      if (!idMatch) {
+        idMatch = command.match(/(?:delete|remove)\s+the\s+task\s+([^.!?]+)/i);
+      }
+
+      // Also try to match "remove the task buy milk" pattern
+      if (!idMatch) {
+        idMatch = command.match(/(?:delete|remove)\s+task\s+([^.!?]+)/i);
+      }
+
+      if (idMatch) {
+        return {
+          action: 'delete_todo',
+          data: { identifier: idMatch[1].trim() },
+          success: true,
+          message: `Deleting todo: ${idMatch[1].trim()}`
+        };
+      }
+    } else if (normalizedCommand.includes('list') || normalizedCommand.includes('show') || normalizedCommand.includes('view')) {
+      let filter = 'all';
+      if (normalizedCommand.includes('completed')) {
+        filter = 'completed';
+      } else if (normalizedCommand.includes('active') || normalizedCommand.includes('pending') || normalizedCommand.includes('incomplete')) {
+        filter = 'active';
+      }
+
+      return {
+        action: 'list_todos',
+        data: { filter },
+        success: true,
+        message: `Listing ${filter} todos`
+      };
+    }
+
+    return {
+      success: false,
+      message: "I'm not sure I understood that. You can say hello, ask for help, or try commands like 'add buy groceries', 'complete todo 1', 'list todos', or 'delete todo 2'."
+    };
+  }
+}
+
+class TodoMCPService {
+  private aiCommandService = new TodoAICommandService();
+
+  async processNaturalLanguageCommand(userId: string, command: string, authToken?: string): Promise<any> {
+    try {
+      // Use AI to process the natural language command
+      return await this.aiCommandService.processNaturalLanguageCommand(userId, command);
+    } catch (error) {
+      console.error('Error processing command:', error);
+      return {
+        success: false,
+        message: `An error occurred: ${(error as Error).message}`
+      };
+    }
+  }
+
+  // Methods have been removed as the server now returns command objects for the client to execute
+
+  showHelp(): any {
+    return {
+      success: true,
+      message: "Here are the commands you can use:\n" +
+        "• 'add buy groceries' - Add a new todo\n" +
+        "• 'complete buy groceries' - Mark a todo as completed\n" +
+        "• 'delete buy groceries' - Delete a todo\n" +
+        "• 'list todos' - Show all your todos\n" +
+        "• 'list completed' - Show completed todos\n" +
+        "• 'list active' - Show active todos\n" +
+        "• 'update buy groceries to buy milk' - Update a todo's title\n" +
+        "• 'help' - Show this help message"
+    };
+  }
+}
+
+export { TodoMCPService, TodoAICommandService };
