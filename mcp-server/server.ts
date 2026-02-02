@@ -318,19 +318,38 @@ class MCPServer {
       }
     });
 
-    // Configure WebSocket server to handle Hugging Face Spaces proxy
+    // Configure WebSocket server to handle Hugging Face Spaces proxy with proper CORS
     this.wss = new WebSocketServer({
       server: httpServer,
-      // Allow all origins and handle potential proxy headers
+      // Verify client connections and handle CORS for deployed frontend
       verifyClient: (info: { origin: string; secure: boolean; req: any }) => {
         // Log the origin and headers for debugging
         console.log('WebSocket connection attempt from:', info.origin);
         console.log('Request headers:', info.req.headers);
         console.log('Secure connection:', info.secure);
 
-        // For Hugging Face Spaces, we allow connections and log details for debugging
-        // The proxy may modify headers, so we log them to understand the connection flow
-        return true;
+        // Allow connections from the deployed frontend
+        const allowedOrigins = [
+          'https://full-stack-todo.vercel.app',  // Deployed frontend
+          'http://localhost:3000',              // Local development
+          'http://localhost:3001',              // Alternative local dev
+          'https://daniyalsiddiqui1-todo.hf.space', // Hugging Face Space itself
+          'https://DaniyalSiddiqui1-Todo.hf.space'  // Alternative Hugging Face Space URL
+        ];
+
+        // Check if the origin is in the allowed list (case-insensitive)
+        const originAllowed = allowedOrigins.some(allowedOrigin =>
+          allowedOrigin.toLowerCase() === info.origin.toLowerCase()
+        );
+
+        if (originAllowed) {
+          console.log('Connection accepted from origin:', info.origin);
+          return true;
+        } else {
+          console.log('Connection rejected from origin:', info.origin);
+          console.log('Allowed origins:', allowedOrigins);
+          return false;
+        }
       }
     });
 
