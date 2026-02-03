@@ -78,7 +78,7 @@ If you encounter issues:
 1. Check the build logs in your Space dashboard
 2. Verify that your Dockerfile is properly configured
 3. Ensure all dependencies in package.json and requirements.txt are correct
-4. Make sure your server listens on the port specified by the PORT environment variable (3001 in your case)
+4. Make sure your server listens on the port specified by the PORT environment variable (7860 in your case)
 
 ## Customization
 

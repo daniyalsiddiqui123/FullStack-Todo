@@ -48,6 +48,6 @@ The server is built with:
 
 ## Docker Configuration
 
-This Space uses Docker to containerize the application. The server runs on port 3001 inside the container.
+This Space uses Docker to containerize the application. The server runs on port 7860 inside the container.
 
 Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
