@@ -464,13 +464,12 @@ class MCPServer {
 }
 
 // Start the server if this file is run directly
-if (require.main === module) {
-  // Use port from environment variable or default to 3001
+const isMain = typeof require !== 'undefined' && require.main === module;
+
+if (isMain) {
+  // Use port from environment variable or default to 7860
   const port = parseInt(process.env.PORT || process.env.MCP_SERVER_PORT || '7860');
   const server = new MCPServer(port);
-
-  // Export for use in modules if needed
-  module.exports = { MCPServer, server };
 }
 
 export { MCPServer, TodoMCPService };

@@ -41,5 +41,6 @@ echo.
 echo Setup completed successfully!
 echo.
 echo To run the application, use: npm run dev
-echo The application will be available at: http://localhost:3000
+echo Frontend will be available at: http://localhost:3000
+echo MCP server will be available at: http://localhost:7860
 pause
