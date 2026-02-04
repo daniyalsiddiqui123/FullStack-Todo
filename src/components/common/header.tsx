@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { getAuthCookie } from '@/lib/auth/cookies.client';
 import { useTheme } from '@/contexts/theme-context';
+import { Menu, X } from 'lucide-react';
 
 export default function Header() {
   const { theme, toggleTheme } = useTheme();
@@ -90,6 +91,8 @@ export default function Header() {
     }
   };
 
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   const isAuthPage = pathname?.includes('/auth');
   const isLandingPage = pathname === '/' || pathname === '/index';
 
@@ -127,7 +130,9 @@ export default function Header() {
               </div>
               <span className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">TodoPro</span>
             </Link>
-            <nav className="ml-8 flex items-center space-x-1">
+
+            {/* Desktop Navigation - Hidden on mobile */}
+            <nav className="hidden md:flex items-center space-x-1 ml-8">
               <Link
                 href="/dashboard"
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
@@ -150,7 +155,24 @@ export default function Header() {
               </Link>
             </nav>
           </div>
-          <div className="flex items-center space-x-4">
+
+          {/* Mobile menu button - Visible only on mobile */}
+          <div className="flex items-center md:hidden">
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 rounded-lg hover:bg-accent/20 transition-all duration-200"
+              aria-label="Toggle menu"
+            >
+              {mobileMenuOpen ? (
+                <X className="w-5 h-5 text-foreground" />
+              ) : (
+                <Menu className="w-5 h-5 text-foreground" />
+              )}
+            </button>
+          </div>
+
+          {/* Desktop Right Side Items - Hidden on mobile */}
+          <div className="hidden md:flex items-center space-x-4">
             {/* Theme Toggle Button */}
             <button
               onClick={() => toggleTheme()}
@@ -209,6 +231,106 @@ export default function Header() {
             )}
           </div>
         </div>
+
+        {/* Mobile Menu - Shown only when mobileMenuOpen is true */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t border-border/50 py-4">
+            <nav className="flex flex-col space-y-2">
+              <Link
+                href="/dashboard"
+                className={`px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  pathname === '/dashboard'
+                    ? 'bg-primary/10 text-primary shadow-sm shadow-primary/20'
+                    : 'text-foreground/70 hover:text-foreground hover:bg-accent/20'
+                }`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/ai-chatbot"
+                className={`px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  pathname === '/ai-chatbot'
+                    ? 'bg-primary/10 text-primary shadow-sm shadow-primary/20'
+                    : 'text-foreground/70 hover:text-foreground hover:bg-accent/20'
+                }`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                AI Assistant
+              </Link>
+
+              {/* Mobile User Actions */}
+              <div className="pt-4 border-t border-border/30">
+                {isLoggedIn ? (
+                  <>
+                    <div className="flex items-center space-x-3 px-4 pb-4">
+                      {/* User Profile */}
+                      <div className="flex items-center space-x-2 text-sm font-medium text-foreground">
+                        <div className="relative">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                            <span className="text-primary-foreground font-medium text-sm">{getUserInitial()}</span>
+                          </div>
+                          <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-card"></div>
+                        </div>
+                        <span className="text-foreground/80">{userEmail ? userEmail.split('@')[0] : 'User'}</span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        handleLogout();
+                        setMobileMenuOpen(false);
+                      }}
+                      className="w-full text-left px-4 py-3 text-sm font-medium text-foreground/70 hover:text-primary hover:bg-accent/20 rounded-lg transition-colors duration-200"
+                    >
+                      Logout
+                    </button>
+                  </>
+                ) : (
+                  <div className="flex flex-col space-y-2 px-4">
+                    <Link
+                      href="/auth/login"
+                      className="px-4 py-3 text-sm font-medium text-foreground/70 hover:text-primary hover:bg-accent/20 rounded-lg transition-colors duration-200"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Login
+                    </Link>
+                    <Link
+                      href="/auth/register"
+                      className="px-4 py-3 text-sm font-medium text-primary-foreground bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 rounded-lg transition-all duration-200 shadow-sm shadow-primary/20"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Sign up
+                    </Link>
+                  </div>
+                )}
+
+                {/* Mobile Theme Toggle */}
+                <div className="pt-2 px-4">
+                  <button
+                    onClick={() => {
+                      toggleTheme();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-3 text-sm font-medium text-foreground/70 hover:text-primary hover:bg-accent/20 rounded-lg transition-colors duration-200 flex items-center justify-between"
+                  >
+                    <span>Toggle Theme</span>
+                    <div className="relative w-5 h-5">
+                      {theme === 'dark' ? (
+                        <svg className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
+                        </svg>
+                      ) : (
+                        <svg className="w-5 h-5 text-foreground" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+                        </svg>
+                      )}
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </nav>
+          </div>
+        )}
       </div>
     </header>
   );
