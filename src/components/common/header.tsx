@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { getAuthCookie } from '@/lib/auth/cookies.client';
 import { useTheme } from '@/contexts/theme-context';
-import { Menu, X } from 'lucide-react';
+import { FiMenu as Menu, FiX as X } from 'react-icons/fi';
 
 export default function Header() {
   const { theme, toggleTheme } = useTheme();
